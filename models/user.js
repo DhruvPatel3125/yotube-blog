@@ -21,7 +21,7 @@ const userSchema = new Schema(
     profileImageURL: {
       type: String,
       default: "/images/avt.png",
-      required: true,
+      required: false,
     },
     role: {
       type: String,
@@ -38,14 +38,14 @@ userSchema.pre('save',function(next){
     const user = this;
 
     if(!user.isModified("password")){
-        return;
+        return next();
+    }
     const salt = randomBytes(16).toString();
     const hashPassword = createHmac("sha256", salt).update(user.password).digest("hex");
 
     this.salt = salt;
     this.password = hashPassword;
     next();
-    }
 })
 const User = model("user",userSchema)
 

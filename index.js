@@ -7,16 +7,14 @@ const mongoose = require("mongoose");
 const path = require("path");
 const PORT = 8000;
 
-mongoose.connect("mongodb://localhost:27017/blogify").then(() => {
+mongoose.connect("mongodb://localhost:27017/blogify").then((e) => {
   console.log("Connected to MongoDB");
-}).catch((err) => {
-  console.log(err);
-});
+})
 
 app.set('view engine','ejs');
 app.set("views",path.join(__dirname, "views"));
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: false }));
 app.get("/", (req, res) => {
     res.render("home")
 })
