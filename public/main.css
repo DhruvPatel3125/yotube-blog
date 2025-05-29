@@ -1,0 +1,40 @@
+body {
+    background-color: #e9ecef; /* Light grey background for the body */
+}
+
+.blog-image {
+    max-width: 700px; /* Set a maximum width */
+    max-height: 500px; /* Set a maximum height */
+    width: 100%; /* Make it responsive */
+    height: auto; /* Maintain aspect ratio */
+    display: block; /* Remove extra space below the image */
+    margin: 0 auto 20px auto; /* Center horizontally and add bottom margin */
+    object-fit: contain; /* Ensure the whole image fits within the bounds */
+}
+
+.home-blog-image {
+    width: 100%; /* Make the width fill the container */
+    height: 200px; /* Set a fixed height (adjust as needed for your card width) */
+    object-fit: cover; /* Cover the area while maintaining aspect ratio */
+}
+
+.card {
+    width: 18rem; /* Set a consistent width */
+    padding: 15px; /* Add padding inside the card */
+    margin-bottom: 20px; /* Add space below each card */
+    /* Add other desired card styles here */
+}
+
+h1 {
+    color: #0056b3; /* Darker blue color for headings */
+}
+
+pre {
+    white-space: pre-wrap; /* Wrap long lines */
+    word-wrap: break-word; /* Break words if necessary */
+    font-family: inherit; /* Use the main body font */
+    padding: 10px; /* Add some padding */
+    background-color: #f8f9fa; /* Light background */
+    border: 1px solid #dee2e6; /* Add a border */
+    border-radius: 5px; /* Rounded corners */
+}

@@ -3,6 +3,7 @@ const router = Router();
 const multer = require('multer')
 const path = require('path')
 const Blog = require('../models/blog'); // Import the Blog model
+const Comment = require('../models/comment'); // Import the Blog model
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -20,6 +21,42 @@ router.get('/add-new',(req,res)=>{
     return res.render('addBlog',{
         user:req.user,
     })
+});
+
+router.get("/:id",async (req,res)=>{
+   const blog = await Blog.findById(req.params.id).populate("createdBy");
+   const comments = await Comment.find({blogId:req.params.id}).populate(
+      "createdBy"
+   )
+   console.log("blog",blog)
+
+   if (!blog) {
+      return res.status(404).render("error", { error: "Blog not found." });
+   }
+   console.log("comments",comments)
+
+   return res.render('partials/blog',{
+      user:req.user,
+      blog,
+      comments,
+   })
+})
+
+router.post('/comment/:blogId', async(req, res) => {
+   try {
+      const comment = await Comment.create({
+         content: req.body.content,
+         blogId: req.params.blogId,
+         createdBy: req.user._id
+      });
+      return res.redirect(`/blog/${req.params.blogId}`);
+   } catch (error) {
+      console.error("Error creating comment:", error);
+      return res.render('addBlog', { 
+         error: error.message || "Failed to create comment.",
+         user: req.user,
+      });
+   }
 });
 
 router.post('/',upload.single('coverImage'), async (req,res)=>{
