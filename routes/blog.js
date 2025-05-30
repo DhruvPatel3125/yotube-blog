@@ -4,6 +4,7 @@ const multer = require('multer')
 const path = require('path')
 const Blog = require('../models/blog'); // Import the Blog model
 const Comment = require('../models/comment'); // Import the Blog model
+const fs = require('fs');
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -86,6 +87,99 @@ router.post('/',upload.single('coverImage'), async (req,res)=>{
          user: req.user, // Pass user data back to the template
        });
    }
+});
+
+router.get('/edit/:id', async (req, res) => {
+    try {
+        const blog = await Blog.findById(req.params.id);
+        if (!blog) {
+            return res.status(404).render('error', { error: 'Blog not found.' });
+        }
+
+        // Check if the logged-in user is the creator of the blog
+        if (!req.user || (blog.createdBy && req.user._id.toString() !== blog.createdBy.toString())) {
+            return res.status(403).render('error', { error: 'You are not authorized to edit this blog post.' });
+        }
+
+        return res.render('editBlog', {
+            user: req.user,
+            blog,
+        });
+    } catch (error) {
+        console.error("Error fetching blog for edit:", error);
+        return res.status(500).render('error', { error: 'Failed to load blog for editing.' });
+    }
+});
+
+router.post('/:id', upload.single('coverImage'), async (req, res) => {
+    try {
+        const blog = await Blog.findById(req.params.id);
+        if (!blog) {
+            return res.status(404).render('error', { error: 'Blog not found.' });
+        }
+
+        // Check if the logged-in user is the creator of the blog
+        if (!req.user || (blog.createdBy && req.user._id.toString() !== blog.createdBy.toString())) {
+            return res.status(403).render('error', { error: 'You are not authorized to edit this blog post.' });
+        }
+
+        const { title, body } = req.body;
+        const updateData = { title, body };
+
+        if (req.file) {
+            // Delete old cover image if it exists and is not the default
+            if (blog.coverImageURL && !blog.coverImageURL.includes('default.jpg')) {
+                const oldImagePath = path.resolve('./public' + blog.coverImageURL);
+                if (fs.existsSync(oldImagePath)) {
+                    fs.unlinkSync(oldImagePath);
+                }
+            }
+            updateData.coverImageURL = `/uploads/${req.file.filename}`;
+        }
+
+        await Blog.findByIdAndUpdate(req.params.id, updateData);
+
+        return res.redirect(`/blog/${req.params.id}`);
+
+    } catch (error) {
+        console.error("Error updating blog:", error);
+        return res.render('editBlog', {
+            error: error.message || "Failed to update blog.",
+            user: req.user,
+            blog: { _id: req.params.id, title: req.body.title, body: req.body.body }, // Pass partial data back to retain form values
+        });
+    }
+});
+
+router.delete('/:id', async (req, res) => {
+    try {
+        const blog = await Blog.findById(req.params.id);
+        if (!blog) {
+            return res.status(404).render('error', { error: 'Blog not found.' });
+        }
+
+        // Check if the logged-in user is the creator of the blog
+        if (!req.user || (blog.createdBy && req.user._id.toString() !== blog.createdBy.toString())) {
+            return res.status(403).render('error', { error: 'You are not authorized to delete this blog post.' });
+        }
+
+        // Delete cover image if it exists and is not the default
+        if (blog.coverImageURL && !blog.coverImageURL.includes('default.jpg')) {
+            const imagePath = path.resolve('./public' + blog.coverImageURL);
+            if (fs.existsSync(imagePath)) {
+                fs.unlinkSync(imagePath);
+            }
+        }
+
+        await Blog.findByIdAndDelete(req.params.id);
+        await Comment.deleteMany({ blogId: req.params.id }); // Delete associated comments
+
+        return res.redirect('/');
+
+    } catch (error) {
+        console.error("Error deleting blog:", error);
+        return res.status(500).render('error', { error: 'Failed to delete blog post.' });
+    }
 });
 
 module.exports = router;
