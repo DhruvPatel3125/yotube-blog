@@ -23,26 +23,30 @@ router.get('/add-new',(req,res)=>{
     })
 });
 
-router.get("/:id",async (req,res)=>{
-   const blog = await Blog.findById(req.params.id).populate("createdBy");
-   const comments = await Comment.find({blogId:req.params.id}).populate(
-      "createdBy"
-   )
-   console.log("blog",blog)
+router.get("/:id",async (req,res,next)=>{
+   try {
+      const blog = await Blog.findById(req.params.id).populate("createdBy");
+      const comments = await Comment.find({blogId:req.params.id}).populate(
+         "createdBy"
+      )
+      console.log("blog",blog)
 
-   if (!blog) {
-      return res.status(404).render("error", { error: "Blog not found." });
+      if (!blog) {
+         return res.status(404).render("error", { error: "Blog not found." });
+      }
+      console.log("comments",comments)
+
+      return res.render('partials/blog',{
+         user:req.user,
+         blog,
+         comments,
+      })
+   } catch (error) {
+      next(error);
    }
-   console.log("comments",comments)
-
-   return res.render('partials/blog',{
-      user:req.user,
-      blog,
-      comments,
-   })
 })
 
-router.post('/comment/:blogId', async(req, res) => {
+router.post('/comment/:blogId', async(req, res, next) => {
    try {
       const comment = await Comment.create({
          content: req.body.content,
@@ -52,14 +56,11 @@ router.post('/comment/:blogId', async(req, res) => {
       return res.redirect(`/blog/${req.params.blogId}`);
    } catch (error) {
       console.error("Error creating comment:", error);
-      return res.render('addBlog', { 
-         error: error.message || "Failed to create comment.",
-         user: req.user,
-      });
+      return res.redirect(`/blog/${req.params.blogId}`);
    }
 });
 
-router.post('/',upload.single('coverImage'), async (req,res)=>{
+router.post('/',upload.single('coverImage'), async (req,res,next)=>{
    // console.log(req.body)
    // console.log(req.file)
 
@@ -81,10 +82,7 @@ router.post('/',upload.single('coverImage'), async (req,res)=>{
       console.error("Error creating blog:", error);
       // Render the add blog page again with an error message
       // You might need to fetch user data again if your addBlog.ejs requires it
-      return res.render('addBlog', { 
-         error: error.message || "Failed to create blog.",
-         user: req.user, // Pass user data back to the template
-       });
+      return res.redirect('/');
    }
 });
 

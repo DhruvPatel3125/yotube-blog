@@ -21,9 +21,16 @@ if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true }); // Create the directory if it doesn't exist
 }
 
-mongoose.connect(process.env.MONGO_URL).then((e) => {
-  console.log("Connected to MongoDB");
-})
+
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+}).then(() => {
+  console.log('Connected to MongoDB');
+}).catch(err => {
+  console.error('Error connecting to MongoDB:', err);
+});
+
 
 app.set('view engine','ejs');
 app.set("views",path.join(__dirname, "views"));
